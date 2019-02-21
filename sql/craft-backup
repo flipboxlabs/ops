@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+#### Run bash dump script
+#
+#```bash
+# ./bin/sql-backup-server.sh
+# Require variables:
+# - CRAFT_ENVIRONMENT
+# - DEVOPS_BUCKET
+# - DB_SERVER
+# - DB_USER
+# - DB_PASSWORD
+# - DB_DATABASE
+#```
+
+BACKUP_DIR="/tmp/backups"
+
+FILE=$BACKUP_DIR/backup-`date +%Y%m%d-%H%M%S`.sql
+
+if [ -z "${DEVOPS_BUCKET}" ]; then
+    echo "Variable DEVOPS_BUCKET is required."
+    exit 1
+fi
+
+if [ ! -d "$BACKUP_DIR" ]; then
+    mkdir $BACKUP_DIR;
+fi
+
+if [ ! -z "${DB_TABLE_PREFIX}" ]; then
+    DB_TABLE_PREFIX=${DB_TABLE_PREFIX}_
+fi
+
+CONNECTION="-h $DB_SERVER -u $DB_USER -p$DB_PASSWORD -P 3306"
+
+mysqldump  $CONNECTION \
+--ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}assettransformindex" \
+--ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}assetindexdata" \
+--ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}cache" \
+--ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}sessions" \
+--ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}templatecaches" \
+--ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}templatecachequeries" \
+--ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}templatecacheelements" \
+--ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}entryversions" \
+--single-transaction --add-drop-table --skip-triggers $DB_DATABASE > $FILE && \
+#AND
+mysqldump $CONNECTION -d $DB_DATABASE \
+    ${DB_TABLE_PREFIX}assettransformindex \
+    ${DB_TABLE_PREFIX}assetindexdata \
+    ${DB_TABLE_PREFIX}sessions \
+    ${DB_TABLE_PREFIX}templatecaches \
+    ${DB_TABLE_PREFIX}templatecachequeries \
+    ${DB_TABLE_PREFIX}templatecacheelements \
+    ${DB_TABLE_PREFIX}entryversions >> $FILE;
+
+# TODO - Add more control over the placement of the file on s3 (prefix, datestamp, craft environment, etc)
+gzip $FILE &&  aws s3 sync ${BACKUP_DIR} s3://${DEVOPS_BUCKET}/db-backups/${CRAFT_ENVIRONMENT}/`date +%Y%m%d`/;
+
