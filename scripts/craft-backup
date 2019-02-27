@@ -55,6 +55,5 @@ mysqldump $CONNECTION -d $DB_DATABASE \
 # TODO - Add more control over the placement of the file on s3 (prefix, datestamp, craft environment, etc)
 gzip $FILE &&  aws s3 sync ${BACKUP_DIR} s3://${DEVOPS_BUCKET}/db-backups/${CRAFT_ENVIRONMENT}/`date +%Y%m%d`/;
 
-aws s3 sync ${BACKUP_DIR} s3://${DEVOPS_BUCKET}/db-backups/${CRAFT_ENVIRONMENT}/latetst.sql.gz
-
+aws s3 cp ${FILE} s3://${DEVOPS_BUCKET}/db-backups/${CRAFT_ENVIRONMENT}/latetst.sql.gz
 
