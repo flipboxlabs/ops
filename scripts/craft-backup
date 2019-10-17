@@ -13,6 +13,7 @@
 # - DB_DATABASE
 #```
 
+
 BACKUP_DIR="/tmp/backups"
 
 FILE=$BACKUP_DIR/backup-`date +%Y%m%d-%H%M%S`.sql
@@ -32,28 +33,47 @@ fi
 
 CONNECTION="-h $DB_SERVER -u $DB_USER -p$DB_PASSWORD -P 3306"
 
-mysqldump  $CONNECTION \
---ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}assettransformindex" \
---ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}assetindexdata" \
---ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}cache" \
---ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}sessions" \
---ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}templatecaches" \
---ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}templatecachequeries" \
---ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}templatecacheelements" \
---ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}entryversions" \
---single-transaction --add-drop-table --skip-triggers $DB_DATABASE > $FILE && \
-#AND
-mysqldump $CONNECTION -d $DB_DATABASE \
-    ${DB_TABLE_PREFIX}assettransformindex \
-    ${DB_TABLE_PREFIX}assetindexdata \
-    ${DB_TABLE_PREFIX}sessions \
-    ${DB_TABLE_PREFIX}templatecaches \
-    ${DB_TABLE_PREFIX}templatecachequeries \
-    ${DB_TABLE_PREFIX}templatecacheelements \
-    ${DB_TABLE_PREFIX}entryversions >> $FILE;
+if [ "${CRAFT_VERSION}" == "V2" ]; then
+    mysqldump  $CONNECTION \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}entrydrafts" \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}assettransformindex" \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}sessions" \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}templatecaches" \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}templatecacheelements" \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}entryversions" \
+    --single-transaction --add-drop-table --skip-triggers $DB_DATABASE > $FILE && \
+    #AND
+    mysqldump $CONNECTION -d $DB_DATABASE \
+        "${DB_TABLE_PREFIX}entrydrafts" \
+        "${DB_TABLE_PREFIX}assettransformindex" \
+        "${DB_TABLE_PREFIX}sessions" \
+        "${DB_TABLE_PREFIX}templatecaches" \
+        "${DB_TABLE_PREFIX}templatecacheelements" \
+        "${DB_TABLE_PREFIX}entryversions" >> $FILE;
+else
+    mysqldump  $CONNECTION \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}assettransformindex" \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}assetindexdata" \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}cache" \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}sessions" \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}templatecaches" \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}templatecachequeries" \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}templatecacheelements" \
+    --ignore-table="$DB_DATABASE.${DB_TABLE_PREFIX}entryversions" \
+    --single-transaction --add-drop-table --skip-triggers $DB_DATABASE > $FILE && \
+    #AND
+    mysqldump $CONNECTION -d $DB_DATABASE \
+        "${DB_TABLE_PREFIX}assettransformindex" \
+        "${DB_TABLE_PREFIX}assetindexdata" \
+        "${DB_TABLE_PREFIX}sessions" \
+        "${DB_TABLE_PREFIX}templatecaches" \
+        "${DB_TABLE_PREFIX}templatecachequeries" \
+        "${DB_TABLE_PREFIX}templatecacheelements" \
+        "${DB_TABLE_PREFIX}entryversions" >> $FILE;
+fi
+
 
 # TODO - Add more control over the placement of the file on s3 (prefix, datestamp, craft environment, etc)
 gzip $FILE &&  aws s3 sync ${BACKUP_DIR} s3://${DEVOPS_BUCKET}/db-backups/${CRAFT_ENVIRONMENT}/`date +%Y%m%d`/;
 
-aws s3 cp ${FILE} s3://${DEVOPS_BUCKET}/db-backups/${CRAFT_ENVIRONMENT}/latetst.sql.gz
-
+aws s3 cp ${FILE}.gz s3://${DEVOPS_BUCKET}/db-backups/${CRAFT_ENVIRONMENT}/latest.sql.gz

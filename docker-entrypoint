@@ -8,6 +8,31 @@ if [ ! -z "${AWS_PARAMETER_PATH}" ]; then
     dotenv get-dotenv --path ${AWS_PARAMETER_PATH} --output export -d /etc/profile.d/dotenv
 fi
 
+##===========================================================##
+## S3_SYNC_PREFIX_SRC && S3_SYNC_FILE_SRC
+##===========================================================##
+## (example: s3://bucket-name/object-key.txt)
+## S3_SYNC_PREFIX_SRC
+## Source location of the LIST of files that will be synced down to the container.
+## S3_SYNC_FILE_SRC
+## Source location of the SINGLE file that will be synced down to the container.
+## S3_SYNC_DST
+## Destination of where these files should be synced down to. Defaults to /opt/s3-sync
+
+if [ -z "${S3_SYNC_DST}" ]; then
+    S3_SYNC_DST=/opt/s3-sync/
+fi
+
+if [ ! -z "${S3_SYNC_PREFIX_SRC}" ]; then
+    echo "Syncing ${S3_SYNC_PREFIX_SRC} to ${S3_SYNC_DST}"
+    aws s3 sync $S3_SYNC_PREFIX_SRC $S3_SYNC_DST
+fi
+
+if [ ! -z "${S3_SYNC_FILE_SRC}" ]; then
+    echo "Syncing ${S3_SYNC_FILE_SRC} to ${S3_SYNC_DST}"
+    aws s3 cp $S3_SYNC_FILE_SRC $S3_SYNC_DST
+fi
+
 
 ##===========================================================##
 ## Hooks with /flipbox.d/
