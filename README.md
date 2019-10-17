@@ -1,4 +1,4 @@
-# flipbox/ops - An Alpine based docker image for operational tasks with built-in AWS hooks
+# flipbox/ops - An Alpine based Docker image for operational tasks with built-in AWS hooks
 
 ## Environmental Variables
 ### `AWS_PARAMETER_PATH`
