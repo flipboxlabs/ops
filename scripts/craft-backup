@@ -55,7 +55,11 @@ CONNECTION="-h $DB_SERVER -u $DB_USER -p$DB_PASSWORD -P 3306"
 echo "Running command on $DB_DATABASE > $FILE"
 
 mysqldump  $CONNECTION \
-    --single-transaction --add-drop-table --skip-triggers $DB_DATABASE > $FILE
+    --no-tablespaces \
+    --single-transaction \
+    --add-drop-table \
+    --skip-triggers \
+    $DB_DATABASE > $FILE
 
 du -h $FILE
 

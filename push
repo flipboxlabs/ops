@@ -11,8 +11,7 @@ Usage: $SCRIPT <tag> [OPTIONS]
 	POSITIONAL:
 		tag              Tag to push, ex: flipbox/php:80-apache
 	OPTIONS:
-		--alias|-a       AWS public profile alias
-		--version|-v     PHP version matching the subdirectory (8.0 )
+		--alias|-a   AWS public profile alias
 		--profile	 AWS Profile
 		--dry-run	 Dry run
 		-h|--help	 Display help
